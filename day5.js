@@ -1,5 +1,3 @@
-// Code for j5 of adventofcode
-
 const SEEDS = [
   2276375722, 160148132, 3424292843, 82110297, 1692203766, 342813967,
   3289792522, 103516087, 2590548294, 590357761, 1365412380, 80084180,
@@ -223,6 +221,8 @@ const ALMANAC = [
   humidity_to_location_map,
 ];
 
+// instructions: https://adventofcode.com/2023/day/5
+
 /**
  * Pass a number through one of the individual map and get its new value
  */
@@ -413,7 +413,7 @@ const getSeedFromLocation = (location) => {
 
 // Just for fun what would be the seed for a location of 0?
 //console.log(getSeedFromLocation(0)); // 2.532.066.368
-                                     // 4.243.281.404
+// 4.243.281.404
 
 // Maybe I can simplify the SEEDS_RANGE.
 const isBetweenRange = (number, range) => {
