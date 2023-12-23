@@ -234,3 +234,9 @@ const traverseMaze = () => {
 const path = traverseMaze()
 console.log("Number of steps to go full circle: ", path.length)
 console.log("The furthest point from the start is: ", Math.floor(path.length / 2))
+/*
+Part 2
+1. Reduce the array "path" into an objectif where each Key IS an y coordinate, and its value IS an array of coordinate object
+2. sort by x
+3. calculate the différence between each coordinate object by x
+*/
