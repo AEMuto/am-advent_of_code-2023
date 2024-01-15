@@ -141,6 +141,11 @@ const MAZE = [
   "L7LLLL--7L-JJL.LL--.|-F-L-|-7-LJJ-F.LJ--LJFJ--JL---7-LJLL-7.|JJ|.LF-FJ-LF|-7-|-J-F|-LLLL|-JLLFJLJ.L|JLJ7-F-FJ-7-J.-J-LJ7JL7-J.J7JJ|J|L-|.7-|",
 ]
 
+function replaceAt(str, index, replacement) {
+  return str.substring(0, index) + replacement + str.substring(index + replacement.length);
+}
+
+
 // The pipes are arranged in a two-dimensional grid of tiles:
 
 //     | is a vertical pipe connecting north and south.
@@ -233,6 +238,16 @@ const path = traverseMaze()
 console.log("Number of steps to go full circle: ", path.length)
 console.log("The furthest point from the start is: ", Math.floor(path.length / 2))
 
+// Write the MAZE to a file
+path.forEach((pos, i) => {
+  let row = MAZE[pos.y]
+  MAZE[pos.y] = replaceAt(row, pos.x, "■")
+})
+
+import fs from "fs"
+fs.writeFileSync("maze.txt", MAZE.join("\n"))
+// Okay it is nice but not very helpful for part 2
+
 /*
 Part 2
 1. Reduce the array "path" into an object where each Key IS an y coordinate, and its value IS an array of coordinate object
@@ -244,31 +259,74 @@ Part 2
  mazePath is an object where each key is a y coordinate, and its value is an array of coordinate objects
  by which we traverse the maze.
  */
-const mazePath = path.reduce((acc, curr) => {
-  if (!acc[curr.y]) acc[curr.y] = []
-  acc[curr.y].push(curr)
-  return acc
-}, {})
-
-for (let y in mazePath) {
-  mazePath[y].sort((a, b) => a.x - b.x)
-}
-
+// const mazePath = path.reduce((acc, curr) => {
+//   if (!acc[curr.y]) acc[curr.y] = []
+//   acc[curr.y].push(curr)
+//   return acc
+// }, {})
+//
+// for (let y in mazePath) {
+//   mazePath[y].sort((a, b) => a.x - b.x)
+// }
+//
 // console.log("mazePath: ", mazePath)
 
-const innerMazeTiles = Object.values(mazePath).reduce((acc, tiles, i, arr) => {
-  if (i === 0 || i === arr.length - 1) return acc
-  let tilesBetween = 0
-  for (let j = 0; j < tiles.length - 1; j++) {
-    let currentTile = tiles[j]
-    let nextTile = tiles[j + 1]
-    if (nextTile.x - currentTile.x > 1) {
-      tilesBetween += nextTile.x - currentTile.x - 1
-      console.log(`Distance between ${JSON.stringify(currentTile)} and ${JSON.stringify(nextTile)} is ${nextTile.x - currentTile.x - 1}`)
-    }
-  }
-  acc += tilesBetween
-  return acc
-}, 0)
+// const innerMazeTiles = Object.values(mazePath).reduce((acc, tiles, i, arr) => {
+//   if (i === 0 || i === arr.length - 1) return acc
+//   let tilesBetween = 0
+//   for (let j = 0; j < tiles.length - 1; j++) {
+//     let currentTile = tiles[j]
+//     let nextTile = tiles[j + 1]
+//     if (nextTile.x - currentTile.x > 1) {
+//       tilesBetween += nextTile.x - currentTile.x - 1
+//       console.log(`Distance between ${JSON.stringify(currentTile)} and ${JSON.stringify(nextTile)} is ${nextTile.x - currentTile.x - 1}`)
+//     }
+//   }
+//   acc += tilesBetween
+//   return acc
+// }, 0)
+//
+// console.log(`Tiles inside the maze: ${innerMazeTiles}`)
 
-console.log(`Tiles inside the maze: ${innerMazeTiles}`)
+// The above code is not working, I don't know why. I'm going to try another approach
+
+// Okay, new idea thx to reddit: using Pick's theorem https://en.wikipedia.org/wiki/Pick%27s_theorem
+// A = i + b/2 - 1, but we have holes so A = i + b/2 - 1 - h
+// A = area of the polygon, and we don't know it either. Apparently we can use the shoelace formula to calculate it.
+// i = number of lattice points inside the polygon, what we want to find
+// b = number of lattice points on the boundary of the polygon, so b = path.length
+// h = number of holes in the polygon (in our case, 0)
+// so i = A - b/2 + 1
+//
+// Now, Shoelace formula: https://en.wikipedia.org/wiki/Shoelace_formula (also recommended by reddit)
+// A = 1/2 * |(x1y2 + x2y3 + ... + xn-1yn + xny1) - (y1x2 + y2x3 + ... + yn-1xn + ynx1)
+// That will give us A, and then we can calculate i
+
+function shoelaceArea(vertices) {
+  let area = 0;
+  for (let i = 0; i < vertices.length - 1; i++) {
+    area += vertices[i].x * vertices[i + 1].y - vertices[i + 1].x * vertices[i].y;
+  }
+  // Add the last vertex and the first vertex
+  area += vertices[vertices.length - 1].x * vertices[0].y - vertices[0].x * vertices[vertices.length - 1].y;
+  return Math.abs(area / 2);
+}
+
+// Let test with a square
+// const square = [
+//   {x: 0, y: 0},
+//   {x: 0, y: 10},
+//   {x: 10, y: 10},
+//   {x: 10, y: 0},
+// ]
+//
+// console.log("Area of the square: ", shoelaceArea(square)) // 100, okay
+
+// Let's try with the path
+const AREA = shoelaceArea(path)
+console.log("Area of the path: ", AREA) // 7282, don't know if it's correct
+
+const tiles_inside = AREA - path.length / 2 + 1 // i = A - b/2 + 1
+console.log("Number of inner tiles: ", tiles_inside) // 483, don't know if it's correct // Good News, it is!
+// Quite cool, I didn't know about Pick's theorem and the shoelace formula.
+// So we know that there are 483 inner tiles, but we don't know their coordinates.
