@@ -163,11 +163,11 @@ const START = {
 }
 console.log("START: ", START)
 
-const lookAround = ({ x, y }) => ({
-  north: { tile: MAZE[y - 1][x], coordinates: { x, y: y - 1 }, position: "north" },
-  south: { tile: MAZE[y + 1][x], coordinates: { x, y: y + 1 }, position: "south" },
-  east: { tile: MAZE[y][x + 1], coordinates: { x: x + 1, y }, position: "east" },
-  west: { tile: MAZE[y][x - 1], coordinates: { x: x - 1, y }, position: "west" },
+const lookAround = ({x, y}) => ({
+  north: {tile: MAZE[y - 1][x], coordinates: {x, y: y - 1}, position: "north"},
+  south: {tile: MAZE[y + 1][x], coordinates: {x, y: y + 1}, position: "south"},
+  east: {tile: MAZE[y][x + 1], coordinates: {x: x + 1, y}, position: "east"},
+  west: {tile: MAZE[y][x - 1], coordinates: {x: x - 1, y}, position: "west"},
 })
 
 
@@ -192,8 +192,7 @@ const getValidMoves = (current_xy, previous_xy) => {
       return [tiles_around.east, tiles_around.west]
         .filter(move => !sameCoordinates(move.coordinates, previous_xy))
     case "L": // North or East
-      return [tiles_around.north, tiles_around.east].
-        filter(move => !sameCoordinates(move.coordinates, previous_xy))
+      return [tiles_around.north, tiles_around.east].filter(move => !sameCoordinates(move.coordinates, previous_xy))
     case "J": // North or West
       return [tiles_around.north, tiles_around.west]
         .filter(move => !sameCoordinates(move.coordinates, previous_xy))
@@ -208,7 +207,6 @@ const getValidMoves = (current_xy, previous_xy) => {
   }
 
 }
-
 
 const traverseMaze = () => {
   let currentPos = START
@@ -234,9 +232,43 @@ const traverseMaze = () => {
 const path = traverseMaze()
 console.log("Number of steps to go full circle: ", path.length)
 console.log("The furthest point from the start is: ", Math.floor(path.length / 2))
+
 /*
 Part 2
-1. Reduce the array "path" into an objectif where each Key IS an y coordinate, and its value IS an array of coordinate object
+1. Reduce the array "path" into an object where each Key IS an y coordinate, and its value IS an array of coordinate object
 2. sort by x
 3. calculate the différence between each coordinate object by x
 */
+
+/*
+ mazePath is an object where each key is a y coordinate, and its value is an array of coordinate objects
+ by which we traverse the maze.
+ */
+const mazePath = path.reduce((acc, curr) => {
+  if (!acc[curr.y]) acc[curr.y] = []
+  acc[curr.y].push(curr)
+  return acc
+}, {})
+
+for (let y in mazePath) {
+  mazePath[y].sort((a, b) => a.x - b.x)
+}
+
+// console.log("mazePath: ", mazePath)
+
+const innerMazeTiles = Object.values(mazePath).reduce((acc, tiles, i, arr) => {
+  if (i === 0 || i === arr.length - 1) return acc
+  let tilesBetween = 0
+  for (let j = 0; j < tiles.length - 1; j++) {
+    let currentTile = tiles[j]
+    let nextTile = tiles[j + 1]
+    if (nextTile.x - currentTile.x > 1) {
+      tilesBetween += nextTile.x - currentTile.x - 1
+      console.log(`Distance between ${JSON.stringify(currentTile)} and ${JSON.stringify(nextTile)} is ${nextTile.x - currentTile.x - 1}`)
+    }
+  }
+  acc += tilesBetween
+  return acc
+}, 0)
+
+console.log(`Tiles inside the maze: ${innerMazeTiles}`)
